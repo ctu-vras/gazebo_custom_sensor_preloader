@@ -1,0 +1,9 @@
+<library path="lib/libexample_custom_sensor">
+  <class name="sensors/example_custom_sensor"
+         type="gazebo::sensors::ExampleCustomSensor"
+         base_class_type="gazebo::sensors::Sensor">
+    <description> 
+      An example Gazebo custom sensor skeleton.
+    </description>
+  </class>
+</library>
