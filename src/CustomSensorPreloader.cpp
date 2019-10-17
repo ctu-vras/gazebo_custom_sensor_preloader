@@ -5,6 +5,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <gazebo/physics/PhysicsFactory.hh>
 #include <gazebo/sensors/SensorManager.hh>
 
 // ignition-common is find_packaged by gazebo
@@ -16,7 +17,13 @@ namespace gazebo
 {
 
 gazebo::CustomSensorPreloader::CustomSensorPreloader() = default;
-CustomSensorPreloader::~CustomSensorPreloader() = default;
+CustomSensorPreloader::~CustomSensorPreloader()
+{
+  if (this->deferredLoadThread)
+  {
+    this->deferredLoadThread->join();
+  }
+};
 
 void CustomSensorPreloader::Init()
 {
@@ -94,6 +101,59 @@ void CustomSensorPreloader::Init()
           << std::endl;
     gazebo::common::SystemPaths::Instance()->AddPluginPaths(libraryDir);
   }
+
+  // We want to run after SensorFactory::RegisterAll() to be sure the factory
+  // is fully initialized. Therefore, we need to defer the preloading a bit
+  // until it finishes. Unfortunately, there's no nice callback that would get
+  // called when sensors are loaded but before world loading. So we piggyback
+  // on PhysicsFactory, which is known to create the physics engines between
+  // sensors::load() and sensors::init() calls (in gazebo.cc).
+  this->deferredLoadThread.reset(new std::thread(
+      std::bind(&CustomSensorPreloader::DeferredPreloadSensors, this)));
+}
+
+void CustomSensorPreloader::DeferredPreloadSensors()
+{
+  // as stated above, wait for physics engine initialization
+  // but if it should take too long, give up the wait - it's very probable that
+  // nothing bad will happen
+  const size_t max_iterations = 2000000;
+  size_t it = 0;
+  while (!gazebo::physics::PhysicsFactory::IsRegistered("ode") && it < max_iterations)
+  {
+    usleep(1);
+    ++it;
+  }
+
+  // call all the saved registration functions
+  for (const auto& tuple : this->sensorsToRegister)
+  {
+    const auto registerFunc = std::get<0>(*tuple);
+    const auto type = std::get<1>(*tuple);
+    const auto classname = std::get<2>(*tuple);
+    const auto fullname = std::get<3>(*tuple);
+
+    // Call the registration function
+    (*registerFunc)();
+
+    std::vector<std::string> types;
+    sensors::SensorManager::Instance()->GetSensorTypes(types);
+
+    if (std::find(types.begin(), types.end(), type) == types.end())
+    {
+      gzwarn << "CustomSensorPreloader: Custom sensor " << classname
+             << " from library " << fullname
+             << " was preloaded, but it did not register a sensor of type "
+             << type << std::endl;
+    }
+    else
+    {
+      gzmsg << "CustomSensorPreloader: Preloaded custom sensor " << classname
+            << " from library " << fullname << std::endl;
+    }
+  }
+
+  this->sensorsToRegister.clear();
 }
 
 void CustomSensorPreloader::ProcessCustomSensor(const std::string& _type,
@@ -102,7 +162,7 @@ void CustomSensorPreloader::ProcessCustomSensor(const std::string& _type,
 
   const auto path = fs::path(_fullname);
   auto filename = path.filename().string();
-  auto libraryDir = path.parent_path();
+  const auto libraryDir = path.parent_path();
 
   this->libraryDirs.insert(libraryDir.string());
 
@@ -147,7 +207,6 @@ void CustomSensorPreloader::ProcessCustomSensor(const std::string& _type,
   }
 
   // The GZ_REGISTER_STATIC_SENSOR macro generates function RegisterClassName()
-  typedef void (*registerFuncType)();
   const auto registerFuncName = "Register" + _classname;
   const auto registerFunc = (registerFuncType) dlsym(dlHandle, registerFuncName.c_str());
 
@@ -160,24 +219,9 @@ void CustomSensorPreloader::ProcessCustomSensor(const std::string& _type,
     return;
   }
 
-  // Call the registration function
-  (*registerFunc)();
-
-  std::vector<std::string> types;
-  sensors::SensorManager::Instance()->GetSensorTypes(types);
-
-  if (std::find(types.begin(), types.end(), _type) == types.end())
-  {
-    gzwarn << "CustomSensorPreloader: Custom sensor " << _classname
-           << " from library " << fullname
-           << " was preloaded, but it did not register a sensor of type "
-           << _type << std::endl;
-  }
-  else
-  {
-    gzmsg << "CustomSensorPreloader: Preloaded custom sensor " << _classname
-          << " from library " << fullname << std::endl;
-  }
+  // The actual registerFunc call has to be done in the deferred loading thread.
+  this->sensorsToRegister.insert(std::make_shared<registerTuple>(
+      std::make_tuple(registerFunc, _type, _classname, fullname)));
 }
 
 void CustomSensorPreloader::Load(int _argc, char **_argv)
