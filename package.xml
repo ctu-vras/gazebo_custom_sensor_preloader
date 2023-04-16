@@ -13,12 +13,11 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <depend>gazebo_dev</depend>
+  <depend>pluginlib</depend>
 
   <build_depend>boost</build_depend>
-  <build_depend>pluginlib</build_depend>
 
   <exec_depend>gazebo_ros</exec_depend>
-  <exec_depend>pluginlib</exec_depend>
   <exec_depend>rosbash</exec_depend>
 
   <!--

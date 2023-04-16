@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.10.2)
 project(gazebo_custom_sensor_preloader)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -11,7 +11,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME} custom_sensor_config_plugin
-  CATKIN_DEPENDS gazebo_dev pluginlib rosbash
+  CATKIN_DEPENDS gazebo_dev pluginlib
 )
 
 include_directories(
@@ -51,3 +51,8 @@ install(FILES
 )
 
 install(FILES example_custom_sensor.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+)
