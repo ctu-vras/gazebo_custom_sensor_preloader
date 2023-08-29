@@ -10,7 +10,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME} custom_sensor_config_plugin
+  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS gazebo_dev pluginlib
 )
 
@@ -32,21 +32,11 @@ add_library(custom_sensor_config_plugin src/CustomSensorConfigPlugin.cpp)
 add_dependencies(custom_sensor_config_plugin ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(custom_sensor_config_plugin ${catkin_LIBRARIES})
 
-file(GENERATE
-  OUTPUT "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION}/gzserver"
-  INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/gzserver.in")
-
-file(GENERATE
-  OUTPUT "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION}/gazebo"
-  INPUT "${CMAKE_CURRENT_SOURCE_DIR}/scripts/gazebo.in")
-
-install(TARGETS ${PROJECT_NAME} example_custom_sensor custom_sensor_config_plugin
+install(TARGETS custom_sensor_config_plugin example_custom_sensor ${PROJECT_NAME}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(FILES
-  "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION}/gzserver"
-  "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_BIN_DESTINATION}/gazebo"
+install(PROGRAMS scripts/gazebo scripts/gzserver
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

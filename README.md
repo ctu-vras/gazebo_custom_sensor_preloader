@@ -23,7 +23,7 @@ Here's a (noncomprehensive) list of known custom sensor implementations that
 work with this plugin. Feel free to open a pull request to add your own implementation
 here.
 
-* [rotating_lidar_sensor](//github.com/peci1/rotating_lidar_sensor): A sensor for
+* [gazebo_rotating_lidar](//github.com/peci1/gazebo_rotating_lidar): A sensor for
 more realistic simulation of lidars based on a rotating mirror where each laser
 beam has a different timestamp.
 
@@ -135,13 +135,8 @@ and add an `<export>` tag that specifies the path to the above-created XML file.
 
 ```cmake
 ...
-catkin_package(
-  ...
-  CATKIN_DEPENDS ... gazebo_custom_sensor_preloader
-  ...
-)
-...
 install(FILES example_custom_sensor.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+...
 ```
 
 ### ... and don't forget to load this system plugin
@@ -151,7 +146,7 @@ Gazebo and want to use a custom sensor, you need to start it with the server
 plugin path like this:
 
 ```shell script
-gzserver -s /absolute/path/to/libgazebo_custom_sensor_preloader.so "other" "args"
+gzserver -s libgazebo_custom_sensor_preloader.so "other" "args"
 ```
 
 This package provides a convenience script which combines this system plugin with
