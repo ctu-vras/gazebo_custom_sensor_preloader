@@ -95,13 +95,6 @@ void CustomSensorPreloader::Init()
     this->ProcessCustomSensor(type, classname, fullname);
   }
 
-  for (const auto& libraryDir : this->libraryDirs)
-  {
-    gzmsg << "CustomSensorPreloader: Adding GAZEBO_PLUGIN_PATH " << libraryDir
-          << std::endl;
-    gazebo::common::SystemPaths::Instance()->AddPluginPaths(libraryDir);
-  }
-
   // We want to run after SensorFactory::RegisterAll() to be sure the factory
   // is fully initialized. Therefore, we need to defer the preloading a bit
   // until it finishes. Unfortunately, there's no nice callback that would get
@@ -163,8 +156,6 @@ void CustomSensorPreloader::ProcessCustomSensor(const std::string& _type,
   const auto path = fs::path(_fullname);
   auto filename = path.filename().string();
   const auto libraryDir = path.parent_path();
-
-  this->libraryDirs.insert(libraryDir.string());
 
   // this implementation is inspired by gazebo::common::Plugin<T>::Create()
 

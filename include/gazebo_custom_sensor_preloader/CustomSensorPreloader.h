@@ -32,8 +32,7 @@ class CustomSensorPreloader : public SystemPlugin
   typedef void (*registerFuncType)();
 
   /**
-   * \brief Store one custom sensor registration function for deferred loading,
-   * and add its library directory to this->libraryDirs.
+   * \brief Store one custom sensor registration function for deferred loading.
    *
    * \param[in] _type Type of the sensor used in SDF to refer to it.
    * \param[in] _classname Name of the sensor's implementation class (without namespace).
@@ -42,9 +41,6 @@ class CustomSensorPreloader : public SystemPlugin
   protected: virtual void ProcessCustomSensor(const std::string& _type,
                                               const std::string& _classname,
                                               const std::string& _fullname);
-
-  /// \brief Set of directories which should be added to Gazebo plugins path.
-  protected: std::unordered_set<std::string> libraryDirs;
 
   /// \brief This thread performs the deferred preloading.
   protected: std::unique_ptr<std::thread> deferredLoadThread;
