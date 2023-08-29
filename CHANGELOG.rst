@@ -2,8 +2,8 @@
 Changelog for package gazebo_custom_sensor_preloader
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.1.0 (2023-08-29)
+------------------
 * Removed unnecessary pollution of gazebo plugin path.
 * Simplified specifying the plugin name on the command line, cleaned up build files.
 * Noetic compatibility.
